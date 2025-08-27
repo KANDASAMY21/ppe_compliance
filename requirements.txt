@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+pillow
+torch
+opencv-python
+python-multipart
+starlette
+pandas
+requests
+IPython
+torchvision
+pyyaml
+tqdm
+matplotlib
+seaborn
+

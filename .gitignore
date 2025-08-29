@@ -1,2 +1,4 @@
-__pycache__
-processed_videos
+__pycache__/
+processed_videos/
+README.md
+

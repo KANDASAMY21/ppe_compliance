@@ -1,28 +1,56 @@
-
-import numpy
 import torch
-import torch.serialization
-import numpy._core.multiarray
+import numpy as np
+from typing import Union
+from PIL import Image
+import pathlib
+import platform
 
-Float64DType = type(numpy.dtype('float64'))
-torch.serialization.add_safe_globals([
-    numpy.ndarray,
-    numpy._core.multiarray._reconstruct,
-    numpy.dtype,
-    Float64DType
-])
+if platform.system() == "Windows":
+    pathlib.PosixPath = pathlib.WindowsPath
 
-def load_model(weights_path: str = r"D:\ppe\yolov9\runs\train\yolov9-e-finetuning2\weights\best.pt", device: str = "cpu"):
-    # Use torch.hub to load YOLOv9 model with custom weights
-    model = torch.hub.load(r'D:\ppe\yolov9', 'custom', path=weights_path, source='local')
-    model.to(device).eval()
-    return model
+# Global model instance
+_model = None
 
-model = load_model()
+def load_model(
+    weights_path: str = r"D:\ppe\yolov5\runs\ppe_model\weights\best.pt",
+    device: str = "cpu"
+):
+    """
+    Load YOLOv5 model with custom weights.
+    """
+    global _model
+    if _model is None:
+        try:
+            # Load YOLOv5 from local repo
+            _model = torch.hub.load(
+                r"D:\ppe\yolov5", 
+                "custom", 
+                path=weights_path, 
+                source="local"
+            )
+            _model.to(device).eval()
+            print(f"✅ Model loaded successfully on {device}")
+        except Exception as e:
+            raise RuntimeError(f"Error loading model: {e}")
+    return _model
 
-def predict_ppe(pil_img, device='cpu'):
-    if model is None:
-        raise RuntimeError('Model not loaded.')
-    # Pass PIL image directly; YOLOv9 wrapper handles preprocessing
-    results = model(pil_img)
-    return results
+
+def predict_ppe(
+    image: Union[str, np.ndarray, Image.Image], 
+    device: str = "cpu"
+):
+    """
+    Run PPE detection on an input image (path, numpy array, or PIL Image).
+    """
+    model = load_model(device=device)
+
+    # Convert input to PIL Image if needed
+    if isinstance(image, str):
+        image = Image.open(image).convert("RGB")
+    elif isinstance(image, np.ndarray):
+        image = Image.fromarray(image)
+
+    # Run inference
+    results = model(image)
+    return results  # YOLOv5's results object
+

@@ -78,15 +78,14 @@ videoForm.onsubmit = async (e) => {
     const res = await fetch('/detect-video', { method: 'POST', body: formData });
     const data = await res.json();
 
-    if (data.job_id && data.status_url && data.download_url) {
+    if (data.job_id && data.status_url) {
         const statusUrl = data.status_url;
-        const downloadUrl = data.download_url;
 
         const interval = setInterval(async () => {
             try {
                 const statusRes = await fetch(statusUrl);
                 const statusData = await statusRes.json();
-                if (statusData.status === "ready") {
+                if (statusData.status === "completed") {
                     clearInterval(interval);
                     videoResult.innerHTML = '';
                     const videoPlayer = document.createElement('video');
@@ -95,13 +94,16 @@ videoForm.onsubmit = async (e) => {
                     videoPlayer.preload = 'auto';
 
                     const source = document.createElement('source');
-                    source.src = downloadUrl;
+                    source.src = `/download-video/${data.job_id}`;
                     source.type = 'video/mp4';
                     videoPlayer.appendChild(source);
                     videoResult.appendChild(videoPlayer);
 
                     videoPlayer.load();
                     videoPlayer.play();
+                } else if (statusData.status === "failed") {
+                    clearInterval(interval);
+                    videoResult.innerHTML = `Processing failed: ${statusData.error}`;
                 } else {
                     videoResult.innerHTML = 'Processing... This may take a while depending on video length.';
                 }

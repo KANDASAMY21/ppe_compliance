@@ -46,7 +46,7 @@ VIDEO_JOBS = {}
 
 
 # --- Load YOLOv5 model ---
-MODEL_PATH = r"D:\ppe\yolov5\runs\ppe_model\weights\best.pt"
+MODEL_PATH = r"D:\ppe\yolov5\runs\yolov5s-finetuning\weights\best.pt"
 model = load_model(MODEL_PATH, device="cpu")
 
 
@@ -84,42 +84,56 @@ async def detect_image(file: UploadFile = File(...)):
 # --- Video processing using subprocess ---
 def process_video_subprocess(input_path, job_id, original_filename):
     try:
+        print(f"Starting video processing for job {job_id}")
         output_filename = f"{job_id}_{original_filename}"
-        output_path = os.path.join(PROCESSED_DIR, output_filename)
+        output_path = os.path.join(PROCESSED_DIR, output_filename) # Save to processed_videos folder
+
+        # Use a temporary directory for detect.py output
+        temp_output_dir = tempfile.mkdtemp()
 
         command = [
             "python", "yolov5/detect.py",
             "--weights", MODEL_PATH,
             "--source", input_path,
-            "--project", PROCESSED_DIR,
-            "--name", job_id,
+            "--project", temp_output_dir, # Save to temp dir
+            "--name", "detection",
             "--exist-ok",
-            "--save-txt",
-            "--save-conf",
+            "--conf-thres", "0.5",
         ]
+        print(f"Running command: {' '.join(command)}")
         subprocess.run(command, check=True)
+        print("Subprocess finished.")
 
         # Find the processed video file
-        processed_video_dir = os.path.join(PROCESSED_DIR, job_id)
+        processed_video_dir = os.path.join(temp_output_dir, "detection")
+        print(f"Looking for processed video in: {processed_video_dir}")
         processed_files = os.listdir(processed_video_dir)
+        print(f"Files in processed_video_dir: {processed_files}")
         video_files = [f for f in processed_files if f.endswith(('.mp4', '.avi', '.mov'))]
 
         if not video_files:
             raise Exception("Processed video file not found.")
 
-        # Rename and move the file
-        processed_video_path = os.path.join(processed_video_dir, video_files[0])
-        os.rename(processed_video_path, output_path)
-        # Clean up the temporary directory created by detect.py
-        shutil.rmtree(processed_video_dir)
+        print(f"Found video file: {video_files[0]}")
+        raw_output_path = os.path.join(processed_video_dir, video_files[0])
+
+        # Convert with ffmpeg and save to static folder
+        print(f"Converting video with ffmpeg. Output: {output_path}")
+        subprocess.run(['ffmpeg', '-y', '-i', raw_output_path, '-vcodec', 'libx264', output_path])
+        print("ffmpeg conversion finished.")
+
+        # Clean up the temporary directory
+        shutil.rmtree(temp_output_dir)
 
         VIDEO_JOBS[job_id] = {
             "status": "completed",
             "output_path": output_path,
             "filename": output_filename
         }
+        print(f"Job {job_id} completed successfully.")
 
     except Exception as e:
+        print(f"Error processing video for job {job_id}: {e}")
         VIDEO_JOBS[job_id] = {"status": "failed", "error": str(e)}
     finally:
         # Clean up the temporary input file

@@ -12,7 +12,7 @@ if platform.system() == "Windows":
 _model = None
 
 def load_model(
-    weights_path: str = r"D:\ppe\yolov5\runs\ppe_model\weights\best.pt",
+    weights_path: str = r"D:\ppe\yolov5\runs\yolov5s-finetuning\weights\best.pt",
     device: str = "cpu"
 ):
     """

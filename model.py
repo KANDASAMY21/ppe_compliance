@@ -12,7 +12,7 @@ if platform.system() == "Windows":
 _model = None
 
 def load_model(
-    weights_path: str = r"D:\ppe\yolov5\runs\yolov5s-finetuning\weights\best.pt",
+    weights_path: str = r"D:\REZLER\PROJECTS\ppe\yolov5\runs\yolov5s-finetuning-suit\weights\best.pt",
     device: str = "cpu"
 ):
     """
@@ -23,7 +23,7 @@ def load_model(
         try:
             # Load YOLOv5 from local repo
             _model = torch.hub.load(
-                r"D:\ppe\yolov5", 
+                r"D:\REZLER\PROJECTS\ppe\yolov5", 
                 "custom", 
                 path=weights_path, 
                 source="local"

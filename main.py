@@ -46,7 +46,7 @@ VIDEO_JOBS = {}
 
 
 # --- Load YOLOv5 model ---
-MODEL_PATH = r"D:\ppe\yolov5\runs\yolov5s-finetuning\weights\best.pt"
+MODEL_PATH = r"D:\REZLER\PROJECTS\ppe\yolov5\runs\yolov5s-finetuning-suit\weights\best.pt"
 model = load_model(MODEL_PATH, device="cpu")
 
 
